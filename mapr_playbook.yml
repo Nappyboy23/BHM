@@ -1,0 +1,84 @@
+---
+- name: Déploiement MapR Cluster
+  hosts: all
+  become: yes
+  vars:
+    mapr_version: "6.1.0"
+    mapr_repo_url: "http://package.mapr.com/releases/v{{ mapr_version }}/ubuntu"
+
+  tasks:
+
+  - name: Ajouter le dépôt MapR
+    yum_repository:
+      name: maprtech
+      description: "MapR Technologies"
+      baseurl: "{{ mapr_repo_url }}"
+      gpgcheck: no
+
+  - name: Installer les packages requis
+    yum:
+      name:
+        - java-1.8.0-openjdk
+        - mapr-core
+        - mapr-hive
+        - mapr-drill
+      state: present
+
+  - name: Configurer le nœud MapR-DB
+    when: inventory_hostname in groups['dianedb.cluster']
+    block:
+      - name: Installer MapR-DB
+        yum:
+          name: dianedb.cluster
+          state: present
+
+      - name: Configurer les services MapR-DB
+        shell: /opt/mapr/server/configure.sh -R -C elie.cluster,djibril.cluster,ariel.cluster -Z elie.cluster,djibril.cluster,ariel.cluster
+        args:
+          creates: /opt/mapr/conf/mapr-clusters.conf
+
+  - name: Configurer les nœuds du cluster
+    when: inventory_hostname in groups['mapr_nodes'] + groups['edge_node']
+    block:
+      - name: Configurer les services MapR
+        shell: /opt/mapr/server/configure.sh -C elie.cluster,djibril.cluster,ariel.cluster -Z elie.cluster,djibril.cluster,ariel.cluster
+        args:
+          creates: /opt/mapr/conf/mapr-clusters.conf
+
+      - name: Démarrer les services MapR
+        service:
+          name: mapr-warden
+          state: started
+          enabled: yes
+
+  - name: Configurer le nœud edge
+    when: inventory_hostname in groups['edge_node']
+    block:
+      - name: Installer les packages supplémentaires pour le nœud edge
+        yum:
+          name:
+            - mapr-client
+          state: present
+
+      - name: Configurer le nœud edge avec le cluster
+        shell: /opt/mapr/server/configure.sh -N cluster_name -C elie.cluster,djibril.cluster,ariel.cluster -Z elie.cluster,djibril.cluster,ariel.cluster -c
+        args:
+          creates: /opt/mapr/conf/mapr-clusters.conf
+
+  - name: Démarrer Hive, Drill et MapR-DB
+    when: inventory_hostname in groups['maprdb_node'] + groups['mapr_nodes'] + groups['edge_node']
+    block:
+      - name: Démarrer le service Hive
+        service:
+          name: mapr-hive
+          state: started
+          enabled: yes
+
+      - name: Démarrer le service Drill
+        service:
+          name: mapr-drill
+          state: started
+          enabled: yes
+
+      - name: Vérifier l'état de MapR-DB
+        shell: /opt/mapr/bin/maprcli node services -name mapr-dbserver -action status

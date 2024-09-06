@@ -1,0 +1,10 @@
+[mapr_nodes]
+elie.cluster ansible_host=192.168.50.101
+djibril.cluster ansible_host=192.168.50.102
+ariel.cluster ansible_host=192.168.50.103
+
+[edge_node]
+edge.cluster ansible_host=192.168.50.199
+
+[maprdb_node]
+dianedb.cluster ansible_host=192.168.50.104
