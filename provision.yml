@@ -1,0 +1,26 @@
+vms:
+  - name: elie.cluster
+    ip: "192.168.50.101"
+    cpu: 2
+    memory: 16048
+    secondary_disks: 1
+  - name: djibril.cluster
+    ip: "192.168.50.102"
+    cpu: 2
+    memory: 16048
+    secondary_disks: 3
+  - name: ariel.cluster
+    ip: "192.168.50.103"
+    cpu: 2
+    memory: 16048
+    secondary_disks: 1
+  - name: edge.cluster
+    ip: "192.168.50.199"
+    cpu: 2
+    memory: 16048
+    secondary_disks: 1
+disk_size: 50000
+disks_folder_path: /dev/sdh
+
+
+
