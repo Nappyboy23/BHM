@@ -1,6 +1,6 @@
 require 'yaml'
 
-config_data = YAML.load_file('provision.yml')
+provision_data = YAML.load_file('provision.yml')
 
 Vagrant.configure("2") do |provision|
   provision_data['vms'].each do |vm_data|
